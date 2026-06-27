@@ -65,3 +65,7 @@ python train.py
 
 ## Stack
 Python · Pandas · LightGBM · FastAPI · Docker · GitHub Actions
+
+## Results Visualization
+
+![Forecast vs Actual](notebooks/plots/predictions.png)
