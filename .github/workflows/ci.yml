@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Test feature pipeline
+      run: |
+        python - << 'PYEOF'
+        import sys
+        sys.path.append('src')
+        import numpy as np
+        import pandas as pd
+        from features import build_features, FEATURE_COLS, TARGET_COL
+
+        # Create minimal test dataframe
+        dates = pd.date_range('2000-01-01', periods=200, freq='h')
+        df = pd.DataFrame({
+            'Datetime': dates,
+            'energy_mw': np.random.uniform(20000, 40000, 200)
+        })
+        result = build_features(df)
+        assert len(result) > 0, "build_features returned empty dataframe"
+        assert all(c in result.columns for c in FEATURE_COLS), "Missing feature columns"
+        print(f"✓ Feature pipeline OK — {result.shape[0]} rows, {len(FEATURE_COLS)} features")
+        PYEOF
+
+    - name: Test API imports
+      run: |
+        python - << 'PYEOF'
+        import sys
+        sys.path.append('src')
+        from features import FEATURE_COLS, TARGET_COL, build_features, load_and_clean
+        import lightgbm as lgb
+        import fastapi
+        import pydantic
+        print("✓ All imports OK")
+        PYEOF
